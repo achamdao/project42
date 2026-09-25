@@ -1,0 +1,88 @@
+#ifndef CLSBODY_HPP
+#define CLSBODY_HPP
+
+#include <iostream>
+#include <string>
+#include "Header.hpp"
+#include <fcntl.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <unistd.h>
+ #include <errno.h>
+ #include <cstring>
+#include "../../../Utils/HelperFunctions.hpp"
+class clsRequest;
+
+
+
+struct chunkVars
+{
+    long long size;
+    uint16_t cur;
+    uint16_t trav;
+    bool readsize;
+    void Reset()
+    {
+        size = 0;
+        cur = 0;
+        trav = 0;
+        readsize = true;
+    }
+};
+
+
+
+class clsBody
+{
+public: // time to debug
+    bool bodyHasLimit;
+    stPollRequest &data;
+    chunkVars chunkHelp;
+    long maxBodySize;
+    long writeSize;
+    std::string _fileName;
+    std::string pathFileAbs;
+    const std::string *uploadStore;
+    const std::string *uploadLocation;
+    HttpError _errorPage;
+    int fd;
+    long    _contentLength;
+    bool _isChunk;
+    void _handleChunk(uint16_t &ofset);
+    bool readSizeChunk(uint16_t &ofset, bool &error, short &totRemoves);
+    bool _saveChunkBody(uint16_t &ofset, bool &error, short &totRemoves);
+    int _createUploadStoreFile(char *path);
+
+    bool removeFile;
+public:
+    enum step
+    {
+        SETTING_VARS,
+        READING_BODY,
+        SECOND_CRLF,
+        DONE_GOOD,
+        DONE_WIHTERROR
+    };
+    step _state;
+
+    // geters
+    clsBody(stPollRequest &p);
+    ~clsBody();
+    const std::string &getFileName() const;
+    step getState() const;
+    void shiftingData(char *src, int offset, int sizeShift);
+    bool bodyHandler(uint16_t *off, const size_t &maxBodySize, bool isCgi, char *path = NULL);
+    void ParseBody(uint16_t &offset);
+    ssize_t getBodySize();
+    void StoreNormalBodyInDisk(uint16_t &offset);
+    void Reset(); 
+    void setUploadStore(const std::string *ptr);
+    void setUploadLocation(const std::string *ptr);
+    int createRandomFile();
+    HttpError getError();
+    char *getFileAbs();
+
+
+};
+
+#endif
